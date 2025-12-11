@@ -4,20 +4,28 @@ import networkx as nx
 
 
 class TSPInstance:
-    def __init__(self, n_cities, coords=None):
+    def __init__(self, n_cities, coords=None, asymmetric=False, dist_matrix=None):
         """
         Initialize TSP instance with city coordinates.
         
         Args:
+        - n_cities: number of cities
         - coords: numpy array of shape (n_cities, 2) with city coordinates
+        - asymmetric: if True, generate asymmetric TSP instance
+        - dist_matrix: custom distance matrix (optional)
         """
         self.n_cities = n_cities
+        self.asymmetric = asymmetric
+        
         if coords is not None:
             self.coords = coords
         else:
             self.coords = np.random.rand(n_cities, 2) * 100
 
-        self.dist_matrix = self.compute_distance_matrix()
+        if dist_matrix is not None:
+            self.dist_matrix = dist_matrix
+        else:
+            self.dist_matrix = self.compute_distance_matrix()
 
         self.graph = self.create_tsp_graph(self.coords, self.dist_matrix)
 
@@ -33,30 +41,54 @@ class TSPInstance:
         - G: NetworkX graph with nodes as cities and edges with distance weights
         """
         n_cities = len(coords)
-        G = nx.Graph()
+        if self.asymmetric:
+            G = nx.DiGraph()
+        else:
+            G = nx.Graph()
 
         # Add nodes with positions
         for i in range(n_cities):
             G.add_node(i, pos=coords[i])
 
         # Add edges with weights
-        for i in range(n_cities):
-            for j in range(i + 1, n_cities):
-                G.add_edge(i, j, weight=dist_matrix[i, j])
+        if self.asymmetric:
+            # Add all directed edges
+            for i in range(n_cities):
+                for j in range(n_cities):
+                    if i != j:
+                        G.add_edge(i, j, weight=dist_matrix[i, j])
+        else:
+            # Add undirected edges
+            for i in range(n_cities):
+                for j in range(i + 1, n_cities):
+                    G.add_edge(i, j, weight=dist_matrix[i, j])
 
         return G
     
     def compute_distance_matrix(self):
         """
-        Compute the Euclidean distance matrix between cities.
+        Compute the distance matrix between cities.
+        For symmetric TSP: Euclidean distances.
+        For asymmetric TSP: Euclidean distances with random asymmetric perturbations.
         
         Returns:
         - dist_matrix: numpy array of shape (n_cities, n_cities)
         """
         dist_matrix = np.zeros((self.n_cities, self.n_cities))
-        for i in range(self.n_cities):
-            for j in range(self.n_cities):
-                dist_matrix[i, j] = np.linalg.norm(self.coords[i] - self.coords[j])
+        if self.asymmetric:
+            # Generate asymmetric distances based on coordinates with random perturbations
+            for i in range(self.n_cities):
+                for j in range(self.n_cities):
+                    if i != j:
+                        base_dist = np.linalg.norm(self.coords[i] - self.coords[j])
+                        # Add asymmetry by applying random multipliers
+                        dist_matrix[i, j] = base_dist * np.random.uniform(0.7, 1.4)
+                    # else: 0 (no self-loop)
+        else:
+            # Symmetric Euclidean distances
+            for i in range(self.n_cities):
+                for j in range(self.n_cities):
+                    dist_matrix[i, j] = np.linalg.norm(self.coords[i] - self.coords[j])
         return dist_matrix
     
     def plot_tsp_instance(self):
@@ -75,7 +107,11 @@ class TSPInstance:
         pos = nx.get_node_attributes(self.graph, 'pos')
         
         # Draw the graph edges with transparency
-        nx.draw_networkx_edges(self.graph, pos, edge_color='skyblue', width=2, alpha=0.7)
+        if self.asymmetric:
+            nx.draw_networkx_edges(self.graph, pos, edge_color='skyblue', width=2, alpha=0.7, 
+                                   arrows=True, arrowsize=20, arrowstyle='->')
+        else:
+            nx.draw_networkx_edges(self.graph, pos, edge_color='skyblue', width=2, alpha=0.7)
         
         # Draw nodes
         nx.draw_networkx_nodes(self.graph, pos, node_color='lightcoral', node_size=500, 
@@ -85,7 +121,8 @@ class TSPInstance:
         nx.draw_networkx_labels(self.graph, pos, font_size=12, font_weight='bold', 
                                 font_color='black')
         
-        plt.title('TSP Instance: Cities and Connections', fontsize=16, fontweight='bold')
+        title_text = 'Asymmetric TSP Instance: Cities and Directed Connections' if self.asymmetric else 'TSP Instance: Cities and Connections'
+        plt.title(title_text, fontsize=16, fontweight='bold')
         plt.xlabel('X Coordinate', fontsize=12)
         plt.ylabel('Y Coordinate', fontsize=12)
         plt.grid(True, alpha=0.3)

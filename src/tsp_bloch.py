@@ -4,10 +4,11 @@ from kaleidoscope import bloch_sphere
 from utility import get_bloch_coordinates_from_statevector
 
 class TSPBlochInstance:
-    def __init__(self, num_cities, city_states, dist_matrix=None):
+    def __init__(self, num_cities, P, dist_matrix, graph):
         self.num_cities = num_cities
-        self.city_states = city_states
+        self.P = P
         self.dist_matrix = dist_matrix
+        self.graph = graph
     
     def get_city_state(self, city_index):
         """
@@ -19,7 +20,7 @@ class TSPBlochInstance:
         Returns:
         - Statevector object representing the city's quantum state
         """
-        return self.city_states[city_index]
+        return self.P[city_index][city_index]
     
     def plot_city_on_bloch_sphere(self, city_index):
         """
@@ -42,5 +43,19 @@ class TSPBlochInstance:
         Returns:
         - matplotlib Figure object with all city states
         """
-        coords = [get_bloch_coordinates_from_statevector(state) for state in self.city_states]
+        coords = [get_bloch_coordinates_from_statevector(self.P[i][i]) for i in range(self.num_cities)]
+        return bloch_sphere(points=coords)
+    
+    def plot_all_states_on_bloch_sphere(self):
+        """
+        Plot all quantum states (including intermediates) on the Bloch sphere.
+
+        Returns:
+        - matplotlib Figure object with all states
+        """
+        coords = []
+        for i in range(self.num_cities):
+            for j in range(self.num_cities):
+                coord = get_bloch_coordinates_from_statevector(self.P[i][j])
+                coords.append(coord)
         return bloch_sphere(points=coords)

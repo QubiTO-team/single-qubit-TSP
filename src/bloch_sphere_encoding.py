@@ -7,11 +7,13 @@ class BlochSphereEncoder:
         self.n_cities = instance.n_cities
 
         self.dist_matrix = instance.dist_matrix
-        self.dist_matrix = self.rescale_distances()
+        self.rescale_distances()
 
         self.graph = instance.graph
 
         self.city_states = self.encode_cities()
+
+        self.P = self.calculate_P_matrix()
 
     def get_encoded_instance(self):
         """
@@ -20,7 +22,7 @@ class BlochSphereEncoder:
         Returns:
         - TSPBlochInstance object with encoded city states
         """
-        return TSPBlochInstance(self.n_cities, self.city_states, self.dist_matrix)
+        return TSPBlochInstance(self.n_cities, self.P, self.dist_matrix, self.graph)
 
     def encode_cities(self):
         """
@@ -30,10 +32,12 @@ class BlochSphereEncoder:
         - states: List of Statevector objects representing the encoded quantum states
         """
         states = []
+        self.city_angles = []
         angle = 0
         for i in range(self.n_cities):
             state = Statevector([np.sqrt(2)/2, np.exp(1j*angle)*np.sqrt(2)/2])
             states.append(state)
+            self.city_angles.append(angle)
             angle += (2 * np.pi / self.n_cities)
 
         return states
@@ -53,15 +57,27 @@ class BlochSphereEncoder:
 
         for i in range(self.n_cities):
             if i != city_index:
-                neighbor_state = self.city_states[i]
-                for alpha in np.linspace(0, 1, num=5):
-                    intermediate_state = (1 - alpha) * current_state + alpha * neighbor_state
-                    intermediate_state = intermediate_state / np.linalg.norm(intermediate_state.data)
-                    intermediate_states.append(Statevector(intermediate_state.data))
+                xi = np.pi/2 - self.dist_matrix[city_index][i]
+                phi = self.city_angles[city_index]
+                intermediate_state = Statevector([np.cos(xi/2), np.exp(1j*phi)*np.sin(xi/2)])
+                intermediate_states.append(intermediate_state)
             else:
                 intermediate_states.append(current_state)
 
         return intermediate_states
+    
+    def calculate_P_matrix(self):
+        """
+        Calculate the Pij states.
+
+        Returns:
+        - P: Matrix of Statevectors
+        """
+        P = []
+        for i in range(self.n_cities):
+            P_row = self.calculate_intermediate_states(i)
+            P.append(P_row)
+        return P
     
     def rescale_distances(self, new_min=0, new_max=np.pi/2):
         """
@@ -79,4 +95,4 @@ class BlochSphereEncoder:
         rescaled_dist_matrix = self.dist_matrix / old_max
         rescaled_dist_matrix = rescaled_dist_matrix * (new_max - new_min) + new_min
 
-        return rescaled_dist_matrix
+        self.dist_matrix = rescaled_dist_matrix

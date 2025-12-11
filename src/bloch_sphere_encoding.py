@@ -1,14 +1,26 @@
 from qiskit.quantum_info import Statevector
-from qiskit.circuit.library import RZGate
-from qiskit.visualization import plot_bloch_multivector
 import numpy as np
-from kaleidoscope import bloch_sphere
+from tsp_bloch import TSPBlochInstance
 
 class BlochSphereEncoder:
     def __init__(self, instance):
         self.n_cities = instance.n_cities
+
         self.dist_matrix = instance.dist_matrix
+        self.dist_matrix = self.rescale_distances()
+
+        self.graph = instance.graph
+
         self.city_states = self.encode_cities()
+
+    def get_encoded_instance(self):
+        """
+        Get the TSP instance with cities encoded as quantum states.
+
+        Returns:
+        - TSPBlochInstance object with encoded city states
+        """
+        return TSPBlochInstance(self.n_cities, self.city_states, self.dist_matrix)
 
     def encode_cities(self):
         """
@@ -18,77 +30,53 @@ class BlochSphereEncoder:
         - states: List of Statevector objects representing the encoded quantum states
         """
         states = []
-        angle = (2*np.pi) / self.n_cities
-        rz = RZGate(angle)
-
+        angle = 0
         for i in range(self.n_cities):
-            operator = rz.power(i)
-            state = Statevector.from_label('+').evolve(operator)
+            state = Statevector([np.sqrt(2)/2, np.exp(1j*angle)*np.sqrt(2)/2])
             states.append(state)
+            angle += (2 * np.pi / self.n_cities)
 
         return states
     
-    def get_city_state(self, city_index):
+    def calculate_intermediate_states(self, city_index):
         """
-        Get the quantum state of a specific city.
+        Calculate intermediate quantum states between a city and its neighbors.
 
         Parameters:
         - city_index: Index of the city
 
         Returns:
-        - Statevector object representing the city's quantum state
+        - intermediate_states: List of Statevector objects representing intermediate states
         """
-        return self.city_states[city_index]
+        intermediate_states = []
+        current_state = self.city_states[city_index]
+
+        for i in range(self.n_cities):
+            if i != city_index:
+                neighbor_state = self.city_states[i]
+                for alpha in np.linspace(0, 1, num=5):
+                    intermediate_state = (1 - alpha) * current_state + alpha * neighbor_state
+                    intermediate_state = intermediate_state / np.linalg.norm(intermediate_state.data)
+                    intermediate_states.append(Statevector(intermediate_state.data))
+            else:
+                intermediate_states.append(current_state)
+
+        return intermediate_states
     
-    @staticmethod
-    def get_bloch_coordinates_from_statevector(statevector):
+    def rescale_distances(self, new_min=0, new_max=np.pi/2):
         """
-        Extract Bloch sphere coordinates (x, y, z) from a Qiskit Statevector.
-        
-        Parameters:
-        - statevector: Qiskit Statevector object (single qubit)
-        
-        Returns:
-        - tuple: (x, y, z) Bloch coordinates
-        """
-        if not isinstance(statevector, Statevector):
-            raise TypeError("Input must be a Qiskit Statevector")
-        
-        # Get the state amplitudes
-        amplitudes = statevector.data
-        
-        if len(amplitudes) != 2:
-            raise ValueError("Statevector must be for a single qubit (2 amplitudes)")
-        
-        alpha, beta = amplitudes[0], amplitudes[1]
-        
-        # Compute Bloch coordinates
-        x = 2 * np.real(alpha * np.conj(beta))
-        y = 2 * np.imag(alpha * np.conj(beta))
-        z = np.abs(alpha)**2 - np.abs(beta)**2
-        
-        return [x, y, z]
-    
-    def plot_city_on_bloch_sphere(self, city_index):
-        """
-        Plot the quantum state of a specific city on the Bloch sphere.
+        Rescale the distance matrix to fit within a specified range.
 
         Parameters:
-        - city_index: Index of the city
+        - new_min: Minimum value of the new scale
+        - new_max: Maximum value of the new scale
 
         Returns:
-        - matplotlib Figure object
+        - rescaled_dist_matrix: Numpy array with rescaled distances
         """
-        state = self.get_city_state(city_index)
-        coord = self.get_bloch_coordinates_from_statevector(state)
-        return bloch_sphere(points=[coord])
+        old_max = np.max(self.dist_matrix)
 
-    def plot_all_cities_on_bloch_sphere(self):
-        """
-        Plot the quantum states of all cities on the Bloch sphere.
+        rescaled_dist_matrix = self.dist_matrix / old_max
+        rescaled_dist_matrix = rescaled_dist_matrix * (new_max - new_min) + new_min
 
-        Returns:
-        - matplotlib Figure object with all city states
-        """
-        coords = [self.get_bloch_coordinates_from_statevector(state) for state in self.city_states]
-        return bloch_sphere(points=coords)
+        return rescaled_dist_matrix

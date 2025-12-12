@@ -22,6 +22,19 @@ class TSPBlochInstance:
         """
         return self.P[city_index][city_index]
     
+    def get_state(self,i,j):
+        """
+        Get a quantum state Pij from the P matrix.
+
+        Parameters:
+        - i: Index of the first city
+        - j: Index of the second city
+
+        Returns:
+        - Statevector object representing the quantum state
+        """
+        return self.P[i][j]
+    
     def plot_city_on_bloch_sphere(self, city_index):
         """
         Plot the quantum state of a specific city on the Bloch sphere.

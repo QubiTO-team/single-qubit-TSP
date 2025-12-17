@@ -57,7 +57,8 @@ class TSPBlochInstance:
         - matplotlib Figure object with all city states
         """
         coords = [get_bloch_coordinates_from_statevector(self.P[i][i]) for i in range(self.num_cities)]
-        return bloch_sphere(points=coords)
+        points_color = ["#FF7300C3"for _ in range(self.num_cities)]
+        return bloch_sphere(points=coords, points_color=points_color)
     
     def plot_all_states_on_bloch_sphere(self):
         """
@@ -67,8 +68,13 @@ class TSPBlochInstance:
         - matplotlib Figure object with all states
         """
         coords = []
+        points_color = []
         for i in range(self.num_cities):
             for j in range(self.num_cities):
                 coord = get_bloch_coordinates_from_statevector(self.P[i][j])
                 coords.append(coord)
-        return bloch_sphere(points=coords)
+                if i == j:
+                    points_color.append("#FF7300C3")
+                else:
+                    points_color.append("#7BFF0097")
+        return bloch_sphere(points=coords, points_color=points_color)

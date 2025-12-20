@@ -49,7 +49,6 @@ class TSPInstance:
                 allowed_routes.append(route)
         self.allowed_routes = allowed_routes
 
-
     def create_tsp_graph(self, coords, dist_matrix):
         """
         Create a NetworkX graph from TSP instance.

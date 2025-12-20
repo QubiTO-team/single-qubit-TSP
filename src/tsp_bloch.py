@@ -4,12 +4,12 @@ from kaleidoscope import bloch_sphere
 from utility import get_bloch_coordinates_from_statevector
 
 class TravelOperator:
-    def __init__(self, from_city, to_city, P, dist_matrix):
+    def __init__(self, from_city, to_city, P):
         self.from_city = from_city
         self.to_city = to_city
         self.set_up_op(P)
         self.set_down_op(P)
-        self.set_cost(dist_matrix)
+        self.set_cost(P)
 
     def set_up_op(self, P):
         """
@@ -36,14 +36,15 @@ class TravelOperator:
         mat = np.outer(v2, v1.conj())
         self.down = Operator(mat)
 
-    def set_cost(self, dist_matrix):
+    def set_cost(self, P):
         """
         Set the cost of traveling from one city to another.
 
         Parameters:
-        - dist_matrix: Matrix of distances between cities
+        - P: Matrix of quantum states
         """
-        self.cost = dist_matrix[self.from_city][self.to_city]
+        self.cost = 2 * np.arccos(np.real(np.inner(P[self.from_city][self.to_city].data, P[self.from_city][self.from_city].data))) # Perchè 2????
+        print(f"Cost from city {self.from_city} to city {self.to_city}: {self.cost}")
 
 class TSPBlochInstance:
     def __init__(self, num_cities, P, dist_matrix, graph, allowed_routes):
@@ -53,6 +54,29 @@ class TSPBlochInstance:
         self.graph = graph
         self.allowed_routes = allowed_routes
         self.set_travel_operators()
+
+    def solve_brute_force(self):
+        """
+        Solve the TSP instance using brute-force search.
+
+        Returns:
+        - best_route: List representing the best route found
+        - min_cost: Cost of the best route
+        """
+        min_cost = float('inf')
+        best_route = None
+
+        for route in self.allowed_routes:
+            total_cost = 0
+            for i in range(len(route) - 1):
+                from_city = route[i]
+                to_city = route[i + 1]
+                total_cost += self.dist_matrix[from_city][to_city]
+            if total_cost < min_cost:
+                min_cost = total_cost
+                best_route = route
+
+        return best_route, min_cost
     
     def set_travel_operators(self):
         """
@@ -65,7 +89,7 @@ class TSPBlochInstance:
         for i in range(self.num_cities):
             for j in range(self.num_cities):
                 if i != j:
-                    operator = TravelOperator(i, j, self.P, self.dist_matrix)
+                    operator = TravelOperator(i, j, self.P)
                     travel_operators[i].append(operator)
                 else:
                     travel_operators[i].append(None)

@@ -46,11 +46,12 @@ class TravelOperator:
         self.cost = dist_matrix[self.from_city][self.to_city]
 
 class TSPBlochInstance:
-    def __init__(self, num_cities, P, dist_matrix, graph):
+    def __init__(self, num_cities, P, dist_matrix, graph, allowed_routes):
         self.num_cities = num_cities
         self.P = P
         self.dist_matrix = dist_matrix
         self.graph = graph
+        self.allowed_routes = allowed_routes
         self.set_travel_operators()
     
     def set_travel_operators(self):
@@ -69,6 +70,15 @@ class TSPBlochInstance:
                 else:
                     travel_operators[i].append(None)
         self.travel_operators = travel_operators
+
+    def get_allowed_routes(self):
+        """
+        Get all allowed routes for the TSP instance.
+
+        Returns:
+        - allowed_routes: List of lists, each representing a valid route
+        """
+        return self.allowed_routes
 
     def get_city_state(self, city_index):
         """

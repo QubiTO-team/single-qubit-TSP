@@ -15,6 +15,8 @@ class BlochSphereEncoder:
 
         self.P = self.calculate_P_matrix()
 
+        self.allowed_routes = instance.allowed_routes
+
     def get_encoded_instance(self):
         """
         Get the TSP instance with cities encoded as quantum states.
@@ -22,7 +24,7 @@ class BlochSphereEncoder:
         Returns:
         - TSPBlochInstance object with encoded city states
         """
-        return TSPBlochInstance(self.n_cities, self.P, self.dist_matrix, self.graph)
+        return TSPBlochInstance(self.n_cities, self.P, self.dist_matrix, self.graph, self.allowed_routes)
 
     def encode_cities(self):
         """

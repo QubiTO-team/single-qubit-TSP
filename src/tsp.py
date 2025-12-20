@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+from itertools import permutations
 
 
 class TSPInstance:
@@ -28,6 +29,26 @@ class TSPInstance:
             self.dist_matrix = self.compute_distance_matrix()
 
         self.graph = self.create_tsp_graph(self.coords, self.dist_matrix)
+
+        self.calculate_allowed_routes()
+
+    def calculate_allowed_routes(self):
+        """
+        Calculate all allowed routes (permutations) for the TSP instance.
+
+        Returns:
+        - allowed_routes: List of lists, each representing a valid route
+        """
+
+        cities = list(range(self.n_cities))
+        all_routes = list(permutations(cities))
+        allowed_routes = []
+        for route in all_routes:
+            if route[0] == 0:
+                route += (0,)  # Return to starting city
+                allowed_routes.append(route)
+        self.allowed_routes = allowed_routes
+
 
     def create_tsp_graph(self, coords, dist_matrix):
         """

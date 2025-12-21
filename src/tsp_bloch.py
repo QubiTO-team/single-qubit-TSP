@@ -44,7 +44,6 @@ class TravelOperator:
         - P: Matrix of quantum states
         """
         self.cost = 2 * np.arccos(np.real(np.inner(P[self.from_city][self.to_city].data, P[self.from_city][self.from_city].data))) # Perchè 2????
-        print(f"Cost from city {self.from_city} to city {self.to_city}: {self.cost}")
 
 class TSPBlochInstance:
     def __init__(self, num_cities, P, dist_matrix, graph, allowed_routes):

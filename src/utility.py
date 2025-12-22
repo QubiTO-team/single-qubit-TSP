@@ -28,3 +28,22 @@ def get_bloch_coordinates_from_statevector(statevector):
     z = np.abs(alpha)**2 - np.abs(beta)**2
     
     return [x, y, z]
+
+    
+def rescale_distances(dist_matrix, new_min=0, new_max=np.pi/2):
+    """
+    Rescale the distance matrix to fit within a specified range.
+
+    Parameters:
+    - new_min: Minimum value of the new scale
+    - new_max: Maximum value of the new scale
+
+    Returns:
+    - rescaled_dist_matrix: Numpy array with rescaled distances
+    """
+    old_max = np.max(dist_matrix)
+
+    rescaled_dist_matrix = dist_matrix / old_max
+    rescaled_dist_matrix = rescaled_dist_matrix * (new_max - new_min) + new_min
+
+    return rescaled_dist_matrix

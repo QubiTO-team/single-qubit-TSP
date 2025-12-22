@@ -1,13 +1,13 @@
 from qiskit.quantum_info import Statevector
 import numpy as np
 from tsp_bloch import TSPBlochInstance
+from utility import rescale_distances
 
 class BlochSphereEncoder:
     def __init__(self, instance):
         self.n_cities = instance.n_cities
 
         self.dist_matrix = instance.dist_matrix
-        self.rescale_distances()
 
         self.graph = instance.graph
 
@@ -24,7 +24,7 @@ class BlochSphereEncoder:
         Returns:
         - TSPBlochInstance object with encoded city states
         """
-        return TSPBlochInstance(self.n_cities, self.P, self.dist_matrix, self.graph, self.allowed_routes)
+        return TSPBlochInstance(self.n_cities, self.P, self.allowed_routes)
 
     def encode_cities(self):
         """
@@ -80,21 +80,3 @@ class BlochSphereEncoder:
             P_row = self.calculate_intermediate_states(i)
             P.append(P_row)
         return P
-    
-    def rescale_distances(self, new_min=0, new_max=np.pi/2):
-        """
-        Rescale the distance matrix to fit within a specified range.
-
-        Parameters:
-        - new_min: Minimum value of the new scale
-        - new_max: Maximum value of the new scale
-
-        Returns:
-        - rescaled_dist_matrix: Numpy array with rescaled distances
-        """
-        old_max = np.max(self.dist_matrix)
-
-        rescaled_dist_matrix = self.dist_matrix / old_max
-        rescaled_dist_matrix = rescaled_dist_matrix * (new_max - new_min) + new_min
-
-        self.dist_matrix = rescaled_dist_matrix

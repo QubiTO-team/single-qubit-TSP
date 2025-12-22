@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from itertools import permutations
+from utility import rescale_distances
 
 
 class TSPInstance:
@@ -27,10 +28,31 @@ class TSPInstance:
             self.dist_matrix = dist_matrix
         else:
             self.dist_matrix = self.compute_distance_matrix()
+        self.dist_matrix = rescale_distances(self.dist_matrix)
 
         self.graph = self.create_tsp_graph(self.coords, self.dist_matrix)
 
         self.calculate_allowed_routes()
+    
+    def solve(self):
+        """
+        Solve the TSP instance using NetworkX approximation algorithm (Christofides for symmetric, 
+        or heuristic for asymmetric). For small instances, this provides a good approximation.
+        
+        Returns:
+        - best_route: list representing the approximate optimal route
+        - approx_cost: float, the total cost of the approximate route
+        """
+        path = nx.approximation.traveling_salesman_problem(self.graph, cycle=True)
+        # Compute the cost
+        cost = 0
+        for i in range(len(path) - 1):
+            cost += self.graph[path[i]][path[i+1]]['weight']
+        # Add return to start if not already
+        if path[-1] != path[0]:
+            cost += self.graph[path[-1]][path[0]]['weight']
+            path.append(path[0])
+        return path, cost
 
     def calculate_allowed_routes(self):
         """

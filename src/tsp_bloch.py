@@ -10,33 +10,40 @@ class TravelOperator:
         self.from_state = P[from_city][from_city]
         self.intermediate_state = P[from_city][to_city]
         self.to_state = P[to_city][to_city]
-        self.set_up_op()
-        self.set_down_op()
+        self.up = self.compute_operator(self.from_state, self.intermediate_state)
+        self.down = self.compute_operator(self.intermediate_state, self.to_state)
 
-    def set_up_op(self):
+    def compute_operator(self, s1, s2):
         """
         Set the 'up' quantum operator.
-
-        Parameters:
-        - P: Matrix of quantum states
         """
-        v1 = self.from_state.data
-        v2 = self.intermediate_state.data
-        mat = np.outer(v2, v1.conj())
-        self.up = Operator(mat)
+        v1 = get_bloch_coordinates_from_statevector(s1)
+        v2 = get_bloch_coordinates_from_statevector(s2)
+        
+        axis = np.cross(v1, v2)
+        axis_norm = np.linalg.norm(axis)
+        try:
+            axis = axis / axis_norm
+        except:
+            print("Warning: Zero division error in axis normalization. Using default axis.")
+            axis = np.array([1,0,0])
+        
+        dot_product = np.dot(v1, v2)
+        dot_product = np.clip(dot_product, -1.0, 1.0)
+        delta = np.arccos(dot_product)
 
-    
-    def set_down_op(self):
-        """
-        Set the 'down' quantum operator.
+        I = np.eye(2)
+        X = np.array([[0, 1], [1, 0]])
+        Y = np.array([[0, -1j], [1j, 0]])
+        Z = np.array([[1, 0], [0, -1]])
 
-        Parameters:
-        - P: Matrix of quantum states
-        """
-        v1 = self.intermediate_state.data
-        v2 = self.to_state.data
-        mat = np.outer(v2, v1.conj())
-        self.down = Operator(mat)
+        nx, ny, nz = axis
+
+        n_dot_sigma = nx * X + ny * Y + nz * Z
+
+        mat = (np.cos(delta/2) * I - 1j * np.sin(delta/2) * n_dot_sigma)
+
+        return Operator(mat)
 
     def calculate_cost(self):
         """

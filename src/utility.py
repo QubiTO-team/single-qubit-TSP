@@ -23,8 +23,8 @@ def get_bloch_coordinates_from_statevector(statevector):
     alpha, beta = amplitudes[0], amplitudes[1]
     
     # Compute Bloch coordinates
-    x = 2 * np.real(alpha * np.conj(beta))
-    y = 2 * np.imag(alpha * np.conj(beta))
+    x = 2 * np.real(np.conj(alpha) * beta)
+    y = 2 * np.imag(np.conj(alpha) * beta)
     z = np.abs(alpha)**2 - np.abs(beta)**2
     
     return [x, y, z]

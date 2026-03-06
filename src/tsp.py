@@ -28,6 +28,8 @@ class TSPInstance:
             self.dist_matrix = dist_matrix
         else:
             self.dist_matrix = self.compute_distance_matrix()
+            
+        self.og_dist_matrix = self.dist_matrix.copy()
         self.dist_matrix = rescale_distances(self.dist_matrix)
 
         self.graph = self.create_tsp_graph(self.coords, self.dist_matrix)

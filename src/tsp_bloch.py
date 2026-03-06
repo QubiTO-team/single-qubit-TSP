@@ -1,7 +1,11 @@
 import numpy as np
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Operator, DensityMatrix
 from kaleidoscope import bloch_sphere
 from utility import get_bloch_coordinates_from_statevector
+from qiskit import QuantumCircuit, transpile
+from qiskit_experiments.library import StateTomography
+from qiskit_experiments.framework import ExperimentData
+from qiskit.quantum_info import state_fidelity as fidelity
 
 class TravelOperator:
     def __init__(self, from_city, to_city, P):
@@ -52,7 +56,7 @@ class TravelOperator:
         Parameters:
         - P: Matrix of quantum states
         """
-        cost = 2 * np.arccos(np.real(np.inner(self.intermediate_state.data.conj(), self.from_state.data))) # Perchè 2????
+        cost = 2 * np.arccos(np.real(np.inner(self.intermediate_state.data.conj(), self.from_state.data)))
         return cost
 
 class TSPBlochInstance:
@@ -95,6 +99,50 @@ class TSPBlochInstance:
                     min_cost = total_cost
                     best_route = route
                 mean_error = (mean_error * r + np.linalg.norm(final_state.data - current_state.data)) / (r + 1)
+
+        else:
+
+            for r in range(len(self.allowed_routes)):
+                qc = QuantumCircuit(1)
+                route = self.allowed_routes[r]
+                total_cost = 0
+                initial_state = self.get_city_state(route[0])
+                initial_rho = DensityMatrix(initial_state)
+                qc.initialize(initial_state, 0)
+                for i in range(len(route)-1):
+                    from_city = route[i]
+                    to_city = route[i+1]
+                    travel_operator = self.travel_operators[from_city][to_city]
+                    qc.append(travel_operator.up, [0])
+                    qc.append(travel_operator.down, [0])
+                    total_cost += travel_operator.calculate_cost()
+                if verbose:
+                    print(f"Route: {route}, Cost: {total_cost}")
+                if total_cost < min_cost:
+                    min_cost = total_cost
+                    best_route = route
+
+                qstexp = StateTomography(qc)
+                circs = qstexp.circuits()
+                transpiled_circs = transpile(circs, backend=backend)
+                job = backend.run(transpiled_circs, shots=1000)
+                result = job.result()
+
+                qstdata = ExperimentData(experiment=qstexp)
+                manual_data = []
+                for i, q_circ in enumerate(circs):
+                    counts = result.get_counts(i)
+                    data_dict = {
+                        "counts": counts,
+                        "metadata": q_circ.metadata.copy()
+                    }
+                    manual_data.append(data_dict)
+                qstdata.add_data(manual_data)
+                qstexp.analysis.run(qstdata).block_for_results()
+
+                final_state = qstdata.analysis_results("state", dataframe=True).iloc[0].value
+                
+                mean_error = (mean_error * r + (1 - fidelity(final_state, initial_rho))) / (r + 1)
 
         return best_route, min_cost, mean_error
     

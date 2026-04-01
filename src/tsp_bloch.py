@@ -98,7 +98,7 @@ class TSPBlochInstance:
                 if total_cost < min_cost:
                     min_cost = total_cost
                     best_route = route
-                mean_error = (mean_error * r + np.linalg.norm(final_state.data - current_state.data)) / (r + 1)
+                mean_error = (mean_error * r + (1 - fidelity(DensityMatrix(final_state), DensityMatrix(current_state)))) / (r + 1)
 
         else:
 

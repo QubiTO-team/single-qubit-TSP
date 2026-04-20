@@ -146,6 +146,9 @@ class TSPBlochInstance:
 
         return best_route, min_cost, mean_error
     
+    def solve(self, backend=None, verbose=False):
+        pass
+    
     def set_travel_operators(self):
         """
         Set travel operators for all pairs of cities.

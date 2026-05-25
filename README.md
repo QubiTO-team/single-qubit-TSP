@@ -21,15 +21,14 @@ The codebase is modularized to separate the classical graph generation, the geom
 
 * **`utility.py`**: Helper functions for matrix rescaling and Cartesian-to-Bloch coordinate transformations.
 
-## Dependencies
+## Installation
 
-This project relies on standard quantum computing and data science libraries.
+To run the code in this repository, you need to install the required
+Python packages. You can install them using `pip`:
 
-* `qiskit` (Circuit construction and Statevector simulation)
-* `qiskit-experiments` (State tomography)
-* `numpy` (Matrix operations and transformations)
-* `networkx` (Classical graph operations)
-* `matplotlib` & `kaleidoscope` (Visualizing graphs and Bloch sphere states)
+``` bash
+pip install -r requirements.txt
+```
 
 ## Running on Lagrange Quantum Computer
 

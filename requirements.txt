@@ -1,0 +1,9 @@
+numpy
+qiskit
+qiskit-experiments
+qiskit-ibm-runtime
+qiskit-iqm
+matplotlib
+networkx
+kaleidoscope
+jupyter

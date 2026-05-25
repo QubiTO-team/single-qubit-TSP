@@ -146,7 +146,21 @@ class TSPBlochInstance:
 
         return best_route, min_cost, mean_error
     
+    def _forward_pass(self, alpha_params):
+        pass
+
+    def _decode_penultimate_state(self, final_state):
+        pass
+
+    def _evaluate_route_cost(self, proposed_route):
+        pass
+
     def solve(self, backend=None, verbose=False):
+        def objective(alphas):
+            state = self._forward_pass(alphas)
+            route = self._decode_penultimate_state(state)
+            cost = self._evaluate_route_cost(route)
+            return cost
         pass
     
     def set_travel_operators(self):

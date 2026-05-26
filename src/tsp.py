@@ -34,7 +34,11 @@ class TSPInstance:
 
         self.graph = self.create_tsp_graph(self.coords, self.dist_matrix)
 
-        self.calculate_allowed_routes()
+        if n_cities <= 10:
+            self.calculate_allowed_routes()
+        else:
+            print("Warning: Too many cities to generate allowed routes: brute-force not available.")
+            self.allowed_routes = None
     
     def solve(self):
         """

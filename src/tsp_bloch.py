@@ -75,6 +75,11 @@ class TSPBlochInstance:
         - min_cost: Cost of the best route
         - mean_error: Mean error in final states across all routes
         """
+
+        if self.allowed_routes is None:
+            print("Error: Allowed routes not available for brute-force search.")
+            return None, None, None
+
         min_cost = float('inf')
         best_route = None
         mean_error = 0.0
